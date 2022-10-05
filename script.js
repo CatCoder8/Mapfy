@@ -223,7 +223,7 @@ class App {
     </div>
   </li>`;
 
-    document.querySelector('.workouts').insertAdjacentHTML('afterend', html);
+    form.insertAdjacentHTML('afterend', html);
   }
 }
 
