@@ -66,6 +66,7 @@ const inputElevation = document.querySelector('.form__input--elevation');
 
 class App {
   #map;
+  #mapZoomLevel = 13;
   #mapEvent;
   #workout = [];
 
@@ -77,12 +78,15 @@ class App {
 
     // Toggling between running and cycling form
     inputType.addEventListener('change', this.#toggleElevationField);
+
+    // Focus on workout location on map
+    containerWorkouts.addEventListener('click', this.#focusLocation.bind(this));
   }
 
   #loadMap(pos) {
     const coords = [pos.coords.latitude, pos.coords.longitude];
 
-    this.#map = L.map('map').setView(coords, 13);
+    this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -182,9 +186,9 @@ class App {
   }
 
   #renderWorkoutForm(workout) {
-    let html = `<li class="workout workout--${
-      workout.type
-    }" data-id="1234567890">
+    let html = `<li class="workout workout--${workout.type}" data-id="${
+      workout.id
+    }">
     <h2 class="workout__title">${workout.workoutDescription}</h2>
     <div class="workout__details">
       <span class="workout__icon">${workout.type ? '🏃' : '🚴‍♀️'}</span>
@@ -224,6 +228,23 @@ class App {
   </li>`;
 
     form.insertAdjacentHTML('afterend', html);
+  }
+
+  #focusLocation(e) {
+    const workoutEl = e.target.closest('.workout');
+
+    if (!workoutEl) return;
+
+    const workout = this.#workout.find(
+      work => work.id === workoutEl.dataset.id
+    );
+
+    this.#map.setView(workout.coords, this.#mapZoomLevel, {
+      animate: true,
+      pan: {
+        duration: 1,
+      },
+    });
   }
 }
 
