@@ -68,10 +68,11 @@ class App {
   #map;
   #mapZoomLevel = 13;
   #mapEvent;
-  #workout = [];
+  #workouts = [];
 
   constructor() {
     this.#getPosition();
+    this.#readLocalStorage();
 
     // Submitting form
     form.addEventListener('submit', this.#newWorkout.bind(this));
@@ -94,6 +95,7 @@ class App {
     }).addTo(this.#map);
 
     this.#map.on('click', this.#showForm.bind(this));
+    this.#workouts.forEach(workout => this.#renderWorkoutMark(workout));
   }
 
   #getPosition() {
@@ -163,10 +165,20 @@ class App {
       workout = new Cycling(distance, duration, [lat, lng], elevation);
     }
 
-    this.#workout.push(workout);
+    // Add new object to wokrout array
+    this.#workouts.push(workout);
+
+    // Add markings on map
     this.#renderWorkoutMark(workout);
+
+    // Add workout form on side bar
     this.#renderWorkoutForm(workout);
+
+    // Hide workout form + clear input fields
     this.#hideForm();
+
+    // Store in local storage
+    this.#setLocalStorage();
   }
 
   #renderWorkoutMark(workout) {
@@ -204,7 +216,7 @@ class App {
     if (workout.type === 'running')
       html += `<div class="workout__details">
       <span class="workout__icon">⚡️</span>
-      <span class="workout__value">${workout.calcPace().toFixed(1)}</span>
+      <span class="workout__value">${workout.pace.toFixed(1)}</span>
       <span class="workout__unit">min/km</span>
     </div>
     <div class="workout__details">
@@ -217,7 +229,7 @@ class App {
     if (workout.type === 'cycling')
       html += `<div class="workout__details">
       <span class="workout__icon">⚡️</span>
-      <span class="workout__value">${workout.calcSpeed().toFixed(1)}</span>
+      <span class="workout__value">${workout.speed.toFixed(1)}</span>
       <span class="workout__unit">km/h</span>
     </div>
     <div class="workout__details">
@@ -231,11 +243,12 @@ class App {
   }
 
   #focusLocation(e) {
+    if (!this.#map) return;
     const workoutEl = e.target.closest('.workout');
 
     if (!workoutEl) return;
 
-    const workout = this.#workout.find(
+    const workout = this.#workouts.find(
       work => work.id === workoutEl.dataset.id
     );
 
@@ -245,6 +258,23 @@ class App {
         duration: 1,
       },
     });
+  }
+
+  #setLocalStorage() {
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+
+  #readLocalStorage() {
+    const data = JSON.parse(localStorage.getItem('workouts'));
+    if (!data) return;
+
+    this.#workouts = data;
+    this.#workouts.forEach(workout => this.#renderWorkoutForm(workout));
+  }
+
+  #clearStorage() {
+    localStorage.clear();
+    location.reload();
   }
 }
 
